@@ -1,45 +1,11 @@
 from math import ceil, floor, prod, sqrt
 
-# d = t * v         # distance traveled
-# t = T - x         # run time is total time minus charge time
-# v = x             # speed == charge time
-# d = (T - x) * x
-# d = -x^2 + Tx     # travel distance as function of charge time
-#
-# Max travel distance is found where the d/dx derivative is crosses zero:
-# d/dx(-x^2 + Tx) = 0
-# -2x + T = 0
-# x = T/2
-#
-# Lower/upper bound of record-breaking times is found by solving for x where
-# d is fixed to the current record.
-# - Start with the quadratic formula: x = (-b +/- sqrt(b^2 - 4ac)) / 2a
-# - Our formula is: x^2 - Tx + d = 0, hence:
-# 
-# x = (T +/- sqrt(T^2 - 4d)) / 2
-# x_lower = (T - sqrt(T^2 - 4d)) / 2
-# x_upper = (T + sqrt(T^2 - 4d)) / 2
-
-
-def dist(race_time: int, charge_time: int) -> int:
-    """Evaluate distance formula: d = -x^2 + Tx."""
-    return (race_time - charge_time) * charge_time
-
-
-def max_dist(race_time: int) -> int:
-    """Return charge time for max travel distance."""
-    return race_time // 2
-
-
 def break_record(race_time: int, record: int) -> (int, int):
     """Return lower/upper bound for charge time that will break record.
 
-    Find the range of charge times where the distance formula yields results
-    greater than the given record.
+    Find the range of charge times where the resulting distance > record.
     """
-    assert dist(race_time, max_dist(race_time)) > record  # We _can_ beat it
-    # x = (T +/- sqrt(T^2 - 4d)) / 2
-    root = sqrt(race_time ** 2 - 4 * (record + 1))  # We want at least record + 1
+    root = sqrt(race_time ** 2 - 4 * (record + 1))
     return (ceil((race_time - root) / 2), floor((race_time + root) / 2))
 
 
