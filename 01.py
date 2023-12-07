@@ -1,4 +1,3 @@
-import re
 from typing import Iterable, Iterator
 
 WORDS = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
@@ -15,8 +14,8 @@ def digits(s: str, *, parse_spelled: bool = False) -> Iterator[int]:
         s = s[1:]
 
 
-def first_and_last[T](l: Iterable[T]) -> (T, T):
-    it = iter(l)
+def first_and_last[T](iterable: Iterable[T]) -> (T, T):
+    it = iter(iterable)
     first = last = next(it)
     for item in it:
         last = item

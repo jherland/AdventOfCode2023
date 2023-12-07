@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from functools import reduce
-from itertools import batched, count
+from itertools import batched
 from typing import Iterable, Iterator, Self
 
 
