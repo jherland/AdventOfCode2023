@@ -11,4 +11,17 @@ requires-python = ">=3.12"
 line-length = 80
 
 [tool.ruff.lint]
-extend-select = ["E501"]
+select = ["ALL"]
+ignore = [
+    "ANN10",  # missing-type-self, missing-type-cls
+    "COM812",  # trailing comma missing
+    "D10",  # missing docstring in public/magic ...
+    "ISC001",  # recommended when using `ruff format`
+    "PLR2004",  # magic value used in comparison
+    "PTH123",  # open() should be replaced by Path.open()
+    "S101",  # assert
+    "T20",  # print, p-print
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "pep257"
