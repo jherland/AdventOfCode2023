@@ -1,0 +1,14 @@
+[project]
+name = "AdventOfCode2023"
+description = "My solutions to Advent of Code 2023."
+version = "1.0"
+authors = [
+    {name = "Johan Herland", email = "johan@herland.net"},
+]
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 80
+
+[tool.ruff.lint]
+extend-select = ["E501"]
