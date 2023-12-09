@@ -1,2 +1,3 @@
 fawltydeps
+nox
 ruff
