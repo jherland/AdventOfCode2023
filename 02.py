@@ -19,7 +19,7 @@ class Cubes:
         return ret
 
     def possible(self, limit: Self) -> bool:
-        """Is this set of cubes a subset of the given the limit?"""
+        """Test if this set of cubes is a subset of the given the limit."""
         return (
             self.red <= limit.red
             and self.green <= limit.green
@@ -32,7 +32,7 @@ class Cubes:
 
 @dataclass
 class Game:
-    id: int
+    id: int  # noqa: A003
     draws: list[Cubes]
 
     @classmethod
@@ -50,7 +50,7 @@ class Game:
         )
 
     def possible(self, limit: Cubes) -> bool:
-        """Is this game possible, within the given the limit?"""
+        """Test if this game is possible, within the given the limit."""
         return all(draw.possible(limit) for draw in self.draws)
 
     def min_cubes(self) -> Cubes:
@@ -63,7 +63,7 @@ class Game:
 
 
 with open("02.input") as f:
-    games = list(Game.parse(line) for line in f)
+    games = [Game.parse(line) for line in f]
 
 # Part 1: Sum of possible Game IDs
 print(sum(game.id for game in games if game.possible(limit=Cubes(12, 13, 14))))

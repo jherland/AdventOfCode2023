@@ -1,5 +1,6 @@
+from collections.abc import Iterator
 from itertools import takewhile
-from typing import Iterator, NamedTuple, Self
+from typing import NamedTuple, Self
 
 
 class Point(NamedTuple):
@@ -48,7 +49,7 @@ with open("03.input") as f:
 
 
 # Part 1: Sum of all of the part numbers in the engine schematic?
-parts = {pmap[p] for sym in symbols.keys() for p in sym.nbors() if p in pmap}
+parts = {pmap[p] for sym in symbols for p in sym.nbors() if p in pmap}
 print(sum(part.number() for part in parts))
 
 

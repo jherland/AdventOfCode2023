@@ -24,7 +24,7 @@ with open("06.input") as f:
 # Part 1: Product of the number of ways to beat the record in each race
 times = [int(num) for num in first.split(":")[1].split()]
 records = [int(num) for num in second.split(":")[1].split()]
-races = zip(times, records)
+races = zip(times, records, strict=True)
 print(
     prod(count_record_breaks(race_time, record) for race_time, record in races)
 )

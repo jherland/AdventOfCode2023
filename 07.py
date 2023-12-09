@@ -82,7 +82,7 @@ class Hand:
 
 
 with open("07.input") as f:
-    hands = list(Hand.parse(line) for line in f)
+    hands = [Hand.parse(line) for line in f]
 
 # Part 1: What are the total winnings from the given hands?
 hands.sort()

@@ -4,7 +4,7 @@ from typing import Self
 
 @dataclass
 class Card:
-    id: int
+    id: int  # noqa: A003
     winning: set[int]
     have: set[int]
     instances: int = 1
@@ -35,7 +35,7 @@ with open("04.input") as f:
 print(sum(card.points() for card in cards))
 
 # Part 2: How many total scratchcards do you end up with?
-for i, card in enumerate(cards):
+for card in cards:
     for ncard in cards[card.id : card.id + len(card.wins())]:
         ncard.instances += card.instances
 print(sum(card.instances for card in cards))

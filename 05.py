@@ -1,13 +1,14 @@
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from functools import reduce
-from itertools import batched
-from typing import Iterable, Iterator, Self
+from itertools import batched, pairwise
+from typing import Self
 
 
 @dataclass(frozen=True, order=True)
 class Range:
     start: int
-    len: int
+    len: int  # noqa: A003
 
     @property
     def end(self) -> int:
@@ -22,12 +23,11 @@ class Range:
     def intersection(self, other: Self) -> Self | None:
         if other < self:
             return other.intersection(self)
-        elif other.start < self.start + self.len:
+        if other.start < self.start + self.len:
             return self.__class__(
                 other.start, min(self.end, other.end) - other.start
             )
-        else:
-            return None
+        return None
 
     def shift(self, offset: int) -> Self:
         return self.__class__(self.start + offset, self.len)
@@ -46,7 +46,6 @@ class Range:
         if any, and yield self split into chunks that never span _across_
         other.start or other.end.
         """
-
         if self.end <= other.start:  # other is fully after self
             yield self
         elif self.start < other.start:  # other starts somewhere in self
@@ -72,8 +71,8 @@ class MapRange:
     dst: Range
 
     @classmethod
-    def parse(cls, line: str):
-        dst_start, src_start, length = [int(num) for num in line.split()]
+    def parse(cls, line: str) -> Self:
+        dst_start, src_start, length = (int(num) for num in line.split())
         return cls(Range(src_start, length), Range(dst_start, length))
 
     @property
@@ -110,7 +109,7 @@ class MapRanges:
                 break
             ranges.append(MapRange.parse(line))
         ranges.sort()
-        for cur, nxt in zip(ranges, ranges[1:]):  # sanity check: no overlaps
+        for cur, nxt in pairwise(ranges):  # sanity check: no overlaps
             assert not cur.src.intersection(nxt.src)
         return cls(src_type, dst_type, ranges)
 
@@ -127,10 +126,10 @@ class MapRanges:
         a_frags = []
         for a_range in a.ranges:
             for b_range in b.ranges:
-                *a_done, a_range = [
+                *a_done, a_range = (  # noqa: PLW2901
                     MapRange(dst.shift(-a_range.offset), dst)
                     for dst in a_range.dst.fragment(b_range.src)
-                ]
+                )
                 a_frags.extend(a_done)
             a_frags.append(a_range)
 
@@ -145,10 +144,10 @@ class MapRanges:
         b_frags = []
         for b_range in b.ranges:
             for r_range in remapped:
-                *b_done, b_range = [
+                *b_done, b_range = (  # noqa: PLW2901
                     MapRange(src, src.shift(b_range.offset))
                     for src in b_range.src.fragment(r_range.dst)
-                ]
+                )
                 b_frags.extend(b_done)
             b_frags.append(b_range)
         for b_frag in b_frags:
@@ -166,7 +165,7 @@ class MapRanges:
 
     def src_intersect(self, limits: Iterable[Range]) -> Self:
         new_ranges = []
-        for range in self.ranges:
+        for range in self.ranges:  # noqa: A001
             new_ranges.extend(range.src_intersect(limits))
         return self.__class__(self.src_type, self.dst_type, new_ranges)
 

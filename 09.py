@@ -1,4 +1,4 @@
-from typing import Iterable, Iterator
+from collections.abc import Iterable, Iterator
 
 
 def derivative(seq: Iterable[int]) -> Iterator[int]:
@@ -12,8 +12,7 @@ def derivative(seq: Iterable[int]) -> Iterator[int]:
 def next_value(seq: list[int]) -> int:
     if all(n == 0 for n in seq):
         return 0
-    else:
-        return seq[-1] + next_value(list(derivative(seq)))
+    return seq[-1] + next_value(list(derivative(seq)))
 
 
 with open("09.input") as f:
