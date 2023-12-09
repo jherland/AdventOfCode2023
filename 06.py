@@ -1,11 +1,12 @@
 from math import ceil, floor, prod, sqrt
 
+
 def break_record(race_time: int, record: int) -> (int, int):
     """Return lower/upper bound for charge time that will break record.
 
     Find the range of charge times where the resulting distance > record.
     """
-    root = sqrt(race_time ** 2 - 4 * (record + 1))
+    root = sqrt(race_time**2 - 4 * (record + 1))
     return (ceil((race_time - root) / 2), floor((race_time + root) / 2))
 
 
@@ -24,7 +25,9 @@ with open("06.input") as f:
 times = [int(num) for num in first.split(":")[1].split()]
 records = [int(num) for num in second.split(":")[1].split()]
 races = zip(times, records)
-print(prod(count_record_breaks(race_time, record) for race_time, record in races))
+print(
+    prod(count_record_breaks(race_time, record) for race_time, record in races)
+)
 
 # Part 2: One bug race
 time = int(first.split(":")[1].replace(" ", ""))

@@ -36,6 +36,6 @@ print(sum(card.points() for card in cards))
 
 # Part 2: How many total scratchcards do you end up with?
 for i, card in enumerate(cards):
-    for ncard in cards[card.id:card.id + len(card.wins())]:
+    for ncard in cards[card.id : card.id + len(card.wins())]:
         ncard.instances += card.instances
 print(sum(card.instances for card in cards))

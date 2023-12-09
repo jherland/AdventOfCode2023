@@ -7,7 +7,7 @@ class Point(NamedTuple):
     x: int
 
     def left(self) -> Self:
-        return self.__class__(self.y, self.x - 1) 
+        return self.__class__(self.y, self.x - 1)
 
     def nbors(self) -> set[Self]:
         return {
@@ -50,6 +50,7 @@ with open("03.input") as f:
 # Part 1: Sum of all of the part numbers in the engine schematic?
 parts = {pmap[p] for sym in symbols.keys() for p in sym.nbors() if p in pmap}
 print(sum(part.number() for part in parts))
+
 
 # Part 2: Sum of all of the gear ratios in your engine schematic?
 def geared_parts() -> Iterator[Part]:

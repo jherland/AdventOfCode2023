@@ -12,7 +12,7 @@ class Cubes:
     def parse(cls, s: str) -> Self:
         """'6 red, 1 blue' -> Cubes(red=5, green=0, blue=1)."""
         ret = cls()
-        for part in s.split(','):
+        for part in s.split(","):
             num, color = part.split()
             assert color in {"red", "green", "blue"}
             setattr(ret, color, int(num))
@@ -21,9 +21,9 @@ class Cubes:
     def possible(self, limit: Self) -> bool:
         """Is this set of cubes a subset of the given the limit?"""
         return (
-            self.red <= limit.red and
-            self.green <= limit.green and
-            self.blue <= limit.blue
+            self.red <= limit.red
+            and self.green <= limit.green
+            and self.blue <= limit.blue
         )
 
     def power(self) -> int:

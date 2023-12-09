@@ -46,7 +46,9 @@ class Hand:
     def with_jokers(self) -> Self:
         """Convert this hand from J -> JOKER."""
         return self.__class__(
-            tuple(Card.JOKER if card == Card.J else card for card in self.cards),
+            tuple(
+                Card.JOKER if card == Card.J else card for card in self.cards
+            ),
             self.bid,
         )
 
@@ -70,10 +72,13 @@ class Hand:
     def __lt__(self, other: Self) -> bool:
         if not isinstance(other, type(self)):
             return NotImplemented
-        return ((self.strength(), self.cards) < (other.strength(), other.cards))
+        return (self.strength(), self.cards) < (other.strength(), other.cards)
 
     def __str__(self) -> str:
-        return "".join(str(card) for card in self.cards) + f" /{self.bid}*{self.strength()}"
+        return (
+            "".join(str(card) for card in self.cards)
+            + f" /{self.bid}*{self.strength()}"
+        )
 
 
 with open("07.input") as f:

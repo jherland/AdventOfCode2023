@@ -96,7 +96,7 @@ class MapRange:
 class MapRanges:
     src_type: str
     dst_type: str
-    ranges: list[MapRange]   # sorted
+    ranges: list[MapRange]  # sorted
 
     @classmethod
     def parse(cls, lines: Iterable[str]) -> Self:
@@ -127,7 +127,7 @@ class MapRanges:
         a_frags = []
         for a_range in a.ranges:
             for b_range in b.ranges:
-                *a_done, a_range  = [
+                *a_done, a_range = [
                     MapRange(dst.shift(-a_range.offset), dst)
                     for dst in a_range.dst.fragment(b_range.src)
                 ]
@@ -161,7 +161,7 @@ class MapRanges:
         return self.__class__(
             self.dst_type,
             self.src_type,
-            sorted([mr.reverse() for mr in self.ranges])
+            sorted([mr.reverse() for mr in self.ranges]),
         )
 
     def src_intersect(self, limits: Iterable[Range]) -> Self:
