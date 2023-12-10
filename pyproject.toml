@@ -13,6 +13,8 @@ line-length = 80
 [tool.ruff.lint]
 select = ["ALL"]
 ignore = [
+    "A001",  # variable <name> is shadowing a Python builtin
+    "A002",  # argument <name> is shadowing a Python builtin
     "ANN10",  # missing-type-self, missing-type-cls
     "COM812",  # trailing comma missing
     "D10",  # missing docstring in public/magic ...

@@ -8,7 +8,7 @@ def check(session: nox.Session) -> None:
 
 
 @nox.session
-def format(session: nox.Session) -> None:  # noqa: A001
+def format(session: nox.Session) -> None:
     session.install("-r", "requirements.txt")
     session.run("ruff", "format", ".")
 

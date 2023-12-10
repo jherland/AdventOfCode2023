@@ -165,7 +165,7 @@ class MapRanges:
 
     def src_intersect(self, limits: Iterable[Range]) -> Self:
         new_ranges = []
-        for range in self.ranges:  # noqa: A001
+        for range in self.ranges:
             new_ranges.extend(range.src_intersect(limits))
         return self.__class__(self.src_type, self.dst_type, new_ranges)
 
