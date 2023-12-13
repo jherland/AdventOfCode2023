@@ -126,7 +126,7 @@ class MapRanges:
         a_frags = []
         for a_range in a.ranges:
             for b_range in b.ranges:
-                *a_done, a_range = (  # noqa: PLW2901
+                *a_done, a_range = (
                     MapRange(dst.shift(-a_range.offset), dst)
                     for dst in a_range.dst.fragment(b_range.src)
                 )
@@ -144,7 +144,7 @@ class MapRanges:
         b_frags = []
         for b_range in b.ranges:
             for r_range in remapped:
-                *b_done, b_range = (  # noqa: PLW2901
+                *b_done, b_range = (
                     MapRange(src, src.shift(b_range.offset))
                     for src in b_range.src.fragment(r_range.dst)
                 )

@@ -20,6 +20,7 @@ ignore = [
     "D10",  # missing docstring in public/magic ...
     "ISC001",  # recommended when using `ruff format`
     "PLR2004",  # magic value used in comparison
+    "PLW2901",  # loop variable overwritten by assignment target
     "PTH123",  # open() should be replaced by Path.open()
     "S101",  # assert
     "T20",  # print, p-print
