@@ -65,3 +65,9 @@ def format(session: nox.Session) -> None:
 def deps(session: nox.Session) -> None:
     install(session, "fawltydeps")
     session.run("fawltydeps", "--detailed")
+
+
+@nox.session
+def typing(session: nox.Session) -> None:
+    install(session, "mypy", "nox")
+    session.run("mypy")
