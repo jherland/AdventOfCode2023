@@ -71,3 +71,8 @@ def deps(session: nox.Session) -> None:
 def typing(session: nox.Session) -> None:
     install(session, "mypy", "nox")
     session.run("mypy")
+
+
+@nox.session
+def tests(session: nox.Session) -> None:
+    session.run("./test.py")
