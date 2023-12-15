@@ -17,7 +17,7 @@ with open("08.input") as f:
 
 def steps_until(
     instructions: Iterator[int], start: str, pred: Callable[[str], bool]
-) -> (str, int):
+) -> tuple[str, int]:
     """Traverse nodes from start following instructions until pred is True."""
     current = start
     steps = 0

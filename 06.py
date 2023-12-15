@@ -1,7 +1,7 @@
 from math import ceil, floor, prod, sqrt
 
 
-def break_record(race_time: int, record: int) -> (int, int):
+def break_record(race_time: int, record: int) -> tuple[int, int]:
     """Return lower/upper bound for charge time that will break record.
 
     Find the range of charge times where the resulting distance > record.

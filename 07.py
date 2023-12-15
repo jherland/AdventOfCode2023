@@ -35,13 +35,13 @@ class Card(IntEnum):
 @total_ordering
 @dataclass(frozen=True)
 class Hand:
-    cards: (Card, Card, Card, Card, Card)
+    cards: tuple[Card, ...]
     bid: int
 
     @classmethod
     def parse(cls, line: str) -> Self:
         cards, bid = line.split()
-        return cls([Card.parse(c) for c in cards], int(bid))
+        return cls(tuple(Card.parse(c) for c in cards), int(bid))
 
     def with_jokers(self) -> Self:
         """Convert this hand from J -> JOKER."""

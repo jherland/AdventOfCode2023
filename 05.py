@@ -32,7 +32,7 @@ class Range:
     def shift(self, offset: int) -> Self:
         return self.__class__(self.start + offset, self.len)
 
-    def split(self, offset: int) -> (Self, Self):
+    def split(self, offset: int) -> tuple[Self, Self]:
         assert 0 < offset < self.len
         return (
             self.__class__(self.start, offset),
@@ -98,7 +98,7 @@ class MapRanges:
     ranges: list[MapRange]  # sorted
 
     @classmethod
-    def parse(cls, lines: Iterable[str]) -> Self:
+    def parse(cls, lines: Iterator[str]) -> Self:
         heading = next(lines).rstrip()
         assert heading.endswith(" map:")
         src_type, to, dst_type = heading[:-5].split("-")
@@ -164,7 +164,7 @@ class MapRanges:
         )
 
     def src_intersect(self, limits: Iterable[Range]) -> Self:
-        new_ranges = []
+        new_ranges: list[MapRange] = []
         for range in self.ranges:
             new_ranges.extend(range.src_intersect(limits))
         return self.__class__(self.src_type, self.dst_type, new_ranges)

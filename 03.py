@@ -1,6 +1,6 @@
 from collections.abc import Iterator
 from itertools import takewhile
-from typing import NamedTuple, Self
+from typing import NamedTuple, Self, cast
 
 
 class Point(NamedTuple):
@@ -54,11 +54,11 @@ print(sum(part.number() for part in parts))
 
 
 # Part 2: Sum of all of the gear ratios in your engine schematic?
-def geared_parts() -> Iterator[Part]:
+def geared_parts() -> Iterator[tuple[Part, Part]]:
     for gear in {p for p, c in symbols.items() if c == "*"}:
         connected = {pmap[nb] for nb in gear.nbors() if nb in pmap}
         if len(connected) == 2:
-            yield tuple(connected)
+            yield cast(tuple[Part, Part], tuple(connected))
 
 
 print(sum(a.number() * b.number() for a, b in geared_parts()))

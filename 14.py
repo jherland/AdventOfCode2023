@@ -64,13 +64,11 @@ def cycles(platform: Platform, n: int) -> Platform:
     while n > 0:
         platform = one_cycle(platform)
         n -= 1
-        if platform in seen and period is not None:
-            assert (seen[platform] - n) % period == 0
-        elif platform in seen:  # found period
+        if platform not in seen:  # still searching
+            seen[platform] = n
+        elif period is None:  # found period
             period = seen[platform] - n
             n %= period
-        else:
-            seen[platform] = n
     return platform
 
 

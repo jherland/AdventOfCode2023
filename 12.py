@@ -1,13 +1,15 @@
 from functools import cache
 
+Groups = tuple[int, ...]
 
-def parse(line: str) -> (str, (int, ...)):
+
+def parse(line: str) -> tuple[str, Groups]:
     s, groups = line.split()
     return s, tuple(int(n) for n in groups.split(","))
 
 
 @cache
-def count_alternatives(clusters: (str, ...), groups: (int, ...)) -> int:
+def count_alternatives(clusters: tuple[str, ...], groups: Groups) -> int:
     if not groups:
         # We're out of required springs. This is only a valid alternative iff
         # there are no more springs in clusters
@@ -45,11 +47,11 @@ def count_alternatives(clusters: (str, ...), groups: (int, ...)) -> int:
     return total
 
 
-def num_matching_springs(input: str, groups: (int, ...)) -> int:
+def num_matching_springs(input: str, groups: Groups) -> int:
     return count_alternatives(tuple(s for s in input.split(".") if s), groups)
 
 
-def unfold(springs: (str, list[int]), times: int) -> (str, list[int]):
+def unfold(springs: tuple[str, Groups], times: int) -> tuple[str, Groups]:
     s, nums = springs
     return "?".join([s] * times), nums * times
 

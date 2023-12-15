@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import sys
 from bisect import bisect_left
 from collections.abc import Iterable, Iterator
@@ -15,7 +17,7 @@ class Dir(Enum):
     def __str__(self) -> str:
         return self.name
 
-    def opposite(self) -> Self:
+    def opposite(self) -> Dir:
         return {Dir.N: Dir.S, Dir.E: Dir.W, Dir.S: Dir.N, Dir.W: Dir.E}[self]
 
 
@@ -52,14 +54,11 @@ class Coord:
         }
         return self + delta[dir]
 
-    def nbors(self) -> ((Self, Dir), (Self, Dir), (Self, Dir), (Self, Dir)):
-        return tuple((self.nbor(d), d) for d in [Dir.N, Dir.E, Dir.S, Dir.W])
-
 
 @dataclass(frozen=True, order=True)
 class Pipe:
     pos: Coord
-    dirs: (Dir, Dir)
+    dirs: tuple[Dir, Dir]
 
     def __str__(self) -> str:
         return f"{self.pos} {self.dirs[0]}/{self.dirs[1]}"
@@ -73,13 +72,13 @@ class Pipe:
         assert in_dir in self.dirs
         return self.dirs[0] if in_dir == self.dirs[1] else self.dirs[1]
 
-    def next_pos(self, in_dir: Dir) -> (Coord, Dir):
+    def next_pos(self, in_dir: Dir) -> tuple[Coord, Dir]:
         """Return next pipe position, and in_dir from its POV."""
         out_dir = self.out_dir(in_dir)
         return self.pos.nbor(out_dir), out_dir.opposite()
 
 
-def bbox(coords: Iterable[Coord]) -> (Coord, Coord):
+def bbox(coords: Iterable[Coord]) -> tuple[Coord, Coord]:
     it = iter(coords)
     first = next(it)
     min_y, max_y = first.y, first.y
@@ -172,8 +171,8 @@ with open("10.input") as f:
     assert start
     nbors = tuple(
         d
-        for nbor, d in start.nbors()
-        if nbor in pipes and d.opposite() in pipes[nbor]
+        for d in [Dir.N, Dir.E, Dir.S, Dir.W]
+        if start.nbor(d) in pipes and d.opposite() in pipes[start.nbor(d)]
     )
     assert len(nbors) == 2
     pipes[start] = Pipe(start, nbors)

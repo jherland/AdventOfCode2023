@@ -3,9 +3,9 @@ from collections.abc import Iterable, Iterator
 WORDS = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
 
 
-def digits(s: str, *, parse_spelled: bool = False) -> Iterator[int]:
+def digits(s: str, *, spelled: bool = False) -> Iterator[int]:
     digits = {str(d): d for d in range(1, 10)}
-    if parse_spelled:
+    if spelled:
         digits |= {word: num for num, word in enumerate(WORDS, start=1)}
     while s:
         for k, v in digits.items():
@@ -14,8 +14,8 @@ def digits(s: str, *, parse_spelled: bool = False) -> Iterator[int]:
         s = s[1:]
 
 
-def first_and_last[T](iterable: Iterable[T]) -> (T, T):
-    it = iter(iterable)
+def first_and_last_digits(digits: Iterable[int]) -> int:
+    it = iter(digits)
     first = last = next(it)
     for item in it:
         last = item
@@ -26,7 +26,7 @@ with open("01.input") as f:
     lines = list(f)
 
 # Part 1: What is the sum of all of the calibration values?
-print(sum(first_and_last(digits(line)) for line in lines))
+print(sum(first_and_last_digits(digits(line)) for line in lines))
 
 # Part 2: What is the sum of calibration values (incl. spelled-out digits)?
-print(sum(first_and_last(digits(line, parse_spelled=True)) for line in lines))
+print(sum(first_and_last_digits(digits(line, spelled=True)) for line in lines))
