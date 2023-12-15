@@ -2,6 +2,11 @@ import nox
 
 
 def patch_binaries_if_needed(session: nox.Session, venv_dir: str) -> None:
+    """If we are on Nix, auto-patch any binaries under `venv_dir`.
+
+    Detect if we are running under Nix, and auto-patch any pre-built binaries
+    that were just installed into the Nox virtualenv.
+    """
     import os  # noqa: I001
     from pathlib import Path
     import shlex
