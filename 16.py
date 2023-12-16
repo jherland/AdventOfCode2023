@@ -1,39 +1,42 @@
-from collections.abc import Iterable, Iterator
-from dataclasses import dataclass
-from enum import Enum, auto
+from collections import deque
+from collections.abc import Iterable
+from functools import cache
 from itertools import chain
-from typing import Self
+from typing import NamedTuple, Self
 
 
-class Dir(Enum):
-    N = auto()
-    E = auto()
-    S = auto()
-    W = auto()
-
-
-@dataclass(frozen=True, order=True)
-class Coord:
+class Coord(NamedTuple):
     y: int
     x: int
 
-    def __add__(self, other: Self) -> Self:
+    def __add__(self, other: Self) -> Self:  # type: ignore[override]
         return self.__class__(self.y + other.y, self.x + other.x)
 
-    def nbor(self, dir: Dir) -> Self:
-        cls = self.__class__
-        delta = {
-            Dir.N: cls(-1, 0),
-            Dir.E: cls(0, 1),
-            Dir.S: cls(1, 0),
-            Dir.W: cls(0, -1),
-        }
-        return self + delta[dir]
+
+Direction = Coord
+Directions = list[Direction]
+DirMap = dict[Direction, Directions]
+
+UP = Direction(-1, 0)
+DOWN = Direction(1, 0)
+LEFT = Direction(0, -1)
+RIGHT = Direction(0, 1)
+DIR_MAP: dict[str, DirMap] = {
+    ".": {UP: [UP], DOWN: [DOWN], LEFT: [LEFT], RIGHT: [RIGHT]},
+    "/": {UP: [RIGHT], RIGHT: [UP], DOWN: [LEFT], LEFT: [DOWN]},
+    "\\": {UP: [LEFT], LEFT: [UP], DOWN: [RIGHT], RIGHT: [DOWN]},
+    "-": {UP: [LEFT, RIGHT], DOWN: [LEFT, RIGHT], LEFT: [LEFT], RIGHT: [RIGHT]},
+    "|": {UP: [UP], DOWN: [DOWN], LEFT: [UP, DOWN], RIGHT: [UP, DOWN]},
+}
 
 
-@dataclass
-class Grid:
-    lines: list[str]
+class Beam(NamedTuple):
+    pos: Coord
+    direction: Direction
+
+
+class Grid(NamedTuple):
+    chars: list[str]
     height: int
     width: int
 
@@ -47,78 +50,45 @@ class Grid:
         assert all(all(c in ".|-/\\" for c in line) for line in lines)
         return cls(lines, height, width)
 
-    def render(self) -> str:
-        return "\n".join(self.lines)
+    def at(self, pos: Coord) -> str:
+        return self.chars[pos.y][pos.x]
 
-    def __getitem__(self, pos: Coord) -> str:
-        return self.lines[pos.y][pos.x]
-
-    def get(self, pos: Coord) -> str | None:
-        try:
-            return self[pos]
-        except IndexError:
-            return None
-
-    def __contains__(self, pos: Coord) -> bool:
+    def contains(self, pos: Coord) -> bool:
         return (0 <= pos.y < self.height) and (0 <= pos.x < self.width)
-
-
-@dataclass(frozen=True, order=True)
-class Beam:
-    pos: Coord
-    dir: Dir  # noqa: A003
-
-    def interact(self, c: str) -> Iterator[Self]:
-        cls = self.__class__
-        if c == ".":
-            yield cls(self.pos.nbor(self.dir), self.dir)
-        elif c == "/":
-            dirmap = {Dir.N: Dir.E, Dir.E: Dir.N, Dir.S: Dir.W, Dir.W: Dir.S}
-            newdir = dirmap[self.dir]
-            yield cls(self.pos.nbor(newdir), newdir)
-        elif c == "\\":
-            dirmap = {Dir.N: Dir.W, Dir.E: Dir.S, Dir.S: Dir.E, Dir.W: Dir.N}
-            newdir = dirmap[self.dir]
-            yield cls(self.pos.nbor(newdir), newdir)
-        elif c == "-" and self.dir in {Dir.E, Dir.W}:
-            yield cls(self.pos.nbor(self.dir), self.dir)
-        elif c == "-":
-            yield cls(self.pos.nbor(Dir.E), Dir.E)
-            yield cls(self.pos.nbor(Dir.W), Dir.W)
-        elif c == "|" and self.dir in {Dir.N, Dir.S}:
-            yield cls(self.pos.nbor(self.dir), self.dir)
-        elif c == "|":
-            yield cls(self.pos.nbor(Dir.N), Dir.N)
-            yield cls(self.pos.nbor(Dir.S), Dir.S)
-        else:
-            raise RuntimeError(self, c)
-
-
-def follow(grid: Grid, start: Beam) -> set[Beam]:
-    seen: set[Beam] = set()
-    queue = [start]
-    while queue:
-        beam = queue.pop(0)
-        if beam.pos not in grid:
-            continue
-        if beam in seen:
-            continue
-        seen.add(beam)
-        queue.extend(beam.interact(grid[beam.pos]))
-    return seen
 
 
 with open("16.input") as f:
     grid = Grid.parse(f)
 
+
+@cache
+def follow(beam: Beam) -> list[Beam]:
+    return [
+        Beam(beam.pos + newdir, newdir)
+        for newdir in DIR_MAP[grid.at(beam.pos)][beam.direction]
+    ]
+
+
+def count_energized(grid: Grid, start: Beam) -> int:
+    seen: set[Beam] = set()
+    queue = deque([start])
+    while queue:
+        beam = queue.pop()
+        if not grid.contains(beam.pos) or beam in seen:
+            continue
+        seen.add(beam)
+        queue.extend(follow(beam))
+    return len({beam.pos for beam in seen})
+
+
 # Part 1: How many tiles are energized when starting at (0,0) from the left?
-print(len({beam.pos for beam in follow(grid, Beam(Coord(0, 0), Dir.E))}))
+print(count_energized(grid, Beam(Coord(0, 0), RIGHT)))
 
 # Part 2: How many tiles are energized when starting at the best edge position?
 start_alts = chain(
-    (Beam(Coord(y, 0), Dir.E) for y in range(grid.height)),
-    (Beam(Coord(y, grid.width - 1), Dir.W) for y in range(grid.height)),
-    (Beam(Coord(0, x), Dir.S) for x in range(grid.width)),
-    (Beam(Coord(grid.height - 1, x), Dir.N) for x in range(grid.width)),
+    (Beam(Coord(y, 0), RIGHT) for y in range(grid.height)),
+    (Beam(Coord(y, grid.width - 1), LEFT) for y in range(grid.height)),
+    (Beam(Coord(0, x), DOWN) for x in range(grid.width)),
+    (Beam(Coord(grid.height - 1, x), UP) for x in range(grid.width)),
 )
-print(max(len({b.pos for b in follow(grid, start)}) for start in start_alts))
+print(max(count_energized(grid, start) for start in start_alts))
