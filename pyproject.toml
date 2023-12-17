@@ -7,6 +7,26 @@ authors = [
 ]
 requires-python = ">=3.12"
 
+# I'd rather prefer something like "dev-dependencies" here, as the following
+# are not really optional _runtime_ dependencies in the usual sense. See
+# https://discuss.python.org/t/adding-a-non-metadata-installer-only-dev-dependencies-table-to-pyproject-toml/20106/1
+# for the relevant upstream discussion. For now, this is "fine", as we don't
+# expect this project to be _installed_ as such.
+[project.optional-dependencies]
+# Dependency groups per nox session
+check = ["ruff"]
+format = ["ruff"]
+deps = ["fawltydeps"]
+typing = ["mypy", "nox"]
+tests = []
+# Superset of the above groups define our dev environment
+dev = [
+    "fawltydeps",
+    "mypy",
+    "nox",
+    "ruff",
+]
+
 [tool.ruff]
 line-length = 80
 

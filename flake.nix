@@ -26,7 +26,7 @@
         postShellHook = ''
           unset SOURCE_DATE_EPOCH
           pip install --upgrade pip
-          pip install -r ./requirements.txt
+          pip install -e .[dev]
           # Patch binaries in the virtualenv to link against Nix deps
           autoPatchelf "$venvDir"
         '';

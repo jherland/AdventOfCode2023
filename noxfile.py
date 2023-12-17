@@ -31,13 +31,10 @@ def patch_binaries_if_needed(session: nox.Session, venv_dir: str) -> None:
     argv += ["--paths", venv_dir, "--libs", *lib_dirs]
     # auto-patchelf.py fails unless these are given (although empty)
     argv += ["--runtime-dependencies", "--append-rpaths", "--extra-args"]
-    print(f"Running: {argv}")
     session.run(*argv, silent=True, external=True)
 
 
-def install(
-    session: nox.Session, *deps: str, include_self: bool = False
-) -> None:
+def install(session: nox.Session, *deps: str) -> None:
     """Install session dependencies, constrained by requirements.txt.
 
     If running on NixOS, ensure that any installed dependencies that contain
@@ -47,37 +44,36 @@ def install(
         session.warn("Running outside a Nox virtualenv! Installation skipped!")
         return
 
-    session.install(*deps, "--constraint", "requirements.txt")
-    if include_self:
-        session.install("-e", ".")
+    session.install(*deps)
     if not session.virtualenv._reused:  # noqa: SLF001
         patch_binaries_if_needed(session, session.virtualenv.location)
 
 
 @nox.session
 def check(session: nox.Session) -> None:
-    install(session, "ruff")
+    install(session, f".[{session.name}]")  # TODO: How to avoid installing self
     session.run("ruff", "check", ".")
 
 
 @nox.session
 def format(session: nox.Session) -> None:
-    install(session, "ruff")
+    install(session, f".[{session.name}]")
     session.run("ruff", "format", ".")
 
 
 @nox.session
 def deps(session: nox.Session) -> None:
-    install(session, "fawltydeps")
+    install(session, f".[{session.name}]")
     session.run("fawltydeps", "--detailed")
 
 
 @nox.session
 def typing(session: nox.Session) -> None:
-    install(session, "mypy", "nox")
+    install(session, f".[{session.name}]")
     session.run("mypy")
 
 
 @nox.session
 def tests(session: nox.Session) -> None:
+    install(session, f".[{session.name}]")
     session.run("./test.py")
