@@ -38,13 +38,16 @@ ignore = [
     "ANN10",  # missing-type-self, missing-type-cls
     "COM812",  # trailing comma missing
     "D10",  # missing docstring in public/magic ...
+    "FIX002",  # line contains TODO, consider resolving the issue
     "ISC001",  # recommended when using `ruff format`
     "PLR2004",  # magic value used in comparison
     "PLW2901",  # loop variable overwritten by assignment target
     "PTH123",  # open() should be replaced by Path.open()
     "S101",  # assert
     "T20",  # print, p-print
-    "TCH003",  # Move standard library import ... into a type-checking block
+    "TCH003",  # move standard library import ... into a type-checking block
+    "TD002",  # missing author in TODO
+    "TD003",  # missing issue link on the line following this TODO
 ]
 
 [tool.ruff.lint.pydocstyle]
