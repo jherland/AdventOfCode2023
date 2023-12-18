@@ -36,12 +36,14 @@ ignore = [
     "A001",  # variable <name> is shadowing a Python builtin
     "A002",  # argument <name> is shadowing a Python builtin
     "ANN10",  # missing-type-self, missing-type-cls
+    "B023",  # function definition does not bind loop variable ...
     "COM812",  # trailing comma missing
     "D10",  # missing docstring in public/magic ...
     "FIX002",  # line contains TODO, consider resolving the issue
     "ISC001",  # recommended when using `ruff format`
     "PLR2004",  # magic value used in comparison
     "PLW2901",  # loop variable overwritten by assignment target
+    "PT018",  # assertion should be broken down into multiple parts
     "PTH123",  # open() should be replaced by Path.open()
     "S101",  # assert
     "T20",  # print, p-print
