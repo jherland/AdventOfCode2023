@@ -50,18 +50,6 @@ def install(session: nox.Session, *deps: str) -> None:
 
 
 @nox.session
-def check(session: nox.Session) -> None:
-    install(session, f".[{session.name}]")  # TODO: How to avoid installing self
-    session.run("ruff", "check", ".")
-
-
-@nox.session
-def format(session: nox.Session) -> None:
-    install(session, f".[{session.name}]")
-    session.run("ruff", "format", ".")
-
-
-@nox.session
 def deps(session: nox.Session) -> None:
     install(session, f".[{session.name}]")
     session.run("fawltydeps", "--detailed")
@@ -71,6 +59,18 @@ def deps(session: nox.Session) -> None:
 def typing(session: nox.Session) -> None:
     install(session, f".[{session.name}]")
     session.run("mypy")
+
+
+@nox.session
+def check(session: nox.Session) -> None:
+    install(session, f".[{session.name}]")  # TODO: How to avoid installing self
+    session.run("ruff", "check", ".")
+
+
+@nox.session
+def format(session: nox.Session) -> None:
+    install(session, f".[{session.name}]")
+    session.run("ruff", "format", ".")
 
 
 @nox.session
