@@ -76,4 +76,4 @@ def format(session: nox.Session) -> None:
 @nox.session
 def tests(session: nox.Session) -> None:
     install(session, f".[{session.name}]")
-    session.run("./test.py")
+    session.run("./test.py", external=True)
