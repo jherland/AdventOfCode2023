@@ -6,6 +6,9 @@ authors = [
     {name = "Johan Herland", email = "johan@herland.net"},
 ]
 requires-python = ">=3.12"
+dependencies = [
+    "bitsets",
+]
 
 # I'd rather prefer something like "dev-dependencies" here, as the following
 # are not really optional _runtime_ dependencies in the usual sense. See

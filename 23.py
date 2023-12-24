@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from functools import cached_property
 from typing import NamedTuple, Self
 
+from bitsets import bitset
+
 
 class Coord(NamedTuple):
     y: int
@@ -113,10 +115,7 @@ class Grid:
         return ret
 
 
-Graph2 = dict[int, dict[int, Cost]]
-
-
-def optimize(graph: Graph, start, end) -> Graph2:
+def optimize(graph: Graph) -> Graph:
     """Remove all non-crossroads from the graph."""
     for pos in list(graph):
         nbors = graph[pos]
@@ -134,70 +133,59 @@ def optimize(graph: Graph, start, end) -> Graph2:
             del graph[pos]
         # print(f"  -> graph[{apos}]={graph[apos]}")
         # print(f"   + graph[{bpos}]={graph[bpos]}")
-    renames = {coord: n for n, coord in enumerate(graph.keys())}
-    return {
-        renames[key]: {renames[k]: v for k, v in value.items()}
-        for key, value in graph.items()
-    }, renames[start], renames[end]
+    return graph
 
 
-class Path(NamedTuple):
-    last: int
-    cost: Cost
-    seen: frozenset[int]
-
-    @classmethod
-    def new(cls, start: int) -> Self:
-        return cls(start, 0, frozenset([start]))
-
-    def followers(self, graph: Graph2) -> Iterator[Self]:
-        for nbor, dcost in graph[self.last].items():
-            if nbor not in self.seen:
-                yield self.__class__(nbor, self.cost + dcost, self.seen | {nbor})
-
-    def followers_list(self, graph: Graph2) -> list[Self]:
-        return [
-            self.__class__(nbor, self.cost + dcost, self.seen | {nbor})
-            for nbor, dcost in graph[self.last].items()
-            if nbor not in self.seen
-        ]
-
-
-def all_paths(graph: Graph2, start: int, end: int) -> Iterator[Path]:
+def longest_paths(graph: Graph, start: Coord, end: Coord) -> Cost:
     assert start in graph
     assert end in graph
+    node_set = bitset("Nodes", tuple(graph.keys()))
+
+    class Path(NamedTuple):
+        last: Coord
+        cost: Cost
+        seen: node_set
+
+        @classmethod
+        def new(cls, start: Coord) -> Self:
+            return cls(start, 0, node_set([start]))
+
+        def followers(self) -> Iterator[Self]:
+            for nbor, dcost in graph[self.last].items():
+                if nbor not in self.seen:
+                    yield self.__class__(
+                        last=nbor,
+                        cost=self.cost + dcost,
+                        seen=self.seen.union(node_set([nbor])),
+                    )
+
     queue = deque([Path.new(start)])
-    longest = 0
+    longest = -1
     while queue:
-        path = queue.popleft()
+        path = queue.pop()
         if path.last == end:
             if path.cost > longest:
-                print("   ", path.cost)
+                # print("   ", path.cost)
                 longest = path.cost
-                if longest > 4000:
-                    return
-            yield path
         else:
-            queue.extend(path.followers(graph))
-            # queue.extend(path.followers_list(graph))
+            queue.extend(path.followers())
+    assert longest >= 0
+    return longest
 
 
 with open("23.input") as f:
     grid = Grid.parse(f)
 
+# print(f"Grid is {grid.height}x{grid.width} = {grid.height * grid.width}")
+# print(f"  and has {len("".join(grid.rows).replace("#", ""))} nodes")
+
 # Part 1: How many steps long is the longest hike?
-print(f"Grid is {grid.height}x{grid.width} = {grid.height * grid.width}")
-print(f"  and has {len("".join(grid.rows).replace("#", ""))} nodes")
-graph = grid.adjacencies()
-print(f"Computed adjacencies, graph has {len(graph)} nodes")
-graph2, start, end = optimize(graph, grid.start(), grid.end())
-print(f"Optimized, graph has {len(graph2)} nodes")
-print(max(path.cost for path in all_paths(graph2, start, end)))
+graph = optimize(grid.adjacencies())
+# print(f"Optimized graph has {len(graph)} nodes")
+print(longest_paths(graph, grid.start(), grid.end()))
 
 # Part 2: How many steps long is the longest hike after removing slopes?
 grid.steep_slopes = False
-graph = grid.adjacencies()
-print(f"Computed adjacencies, graph has {len(graph)} nodes")
-graph2, start, end = optimize(graph, grid.start(), grid.end())
-print(f"Optimized, graph has {len(graph)} nodes")
-print(max(path.cost for path in all_paths(graph2, start, end)))
+graph = optimize(grid.adjacencies())
+# print(f"Optimized, graph has {len(graph)} nodes")
+print(longest_paths(graph, grid.start(), grid.end()))
