@@ -50,6 +50,7 @@ ignore = [
     "PT018",  # assertion should be broken down into multiple parts
     "PTH123",  # open() should be replaced by Path.open()
     "S101",  # assert
+    "S311",  # standard pseudo-random generators unsuitable for crypto purposes
     "T20",  # print, p-print
     "TCH003",  # move standard library import ... into a type-checking block
     "TD002",  # missing author in TODO
