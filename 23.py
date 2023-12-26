@@ -124,7 +124,6 @@ def optimize(graph: Graph) -> Graph:
         if len(nbors) != 2:
             continue
         (apos, acost), (bpos, bcost) = nbors.items()
-        # print(f"{pos=} has 2 {nbors=}")
         if pos in graph[apos]:  # replace graph[apos][pos] -> graph[apos][bpos]
             graph[apos][bpos] = graph[apos][pos] + bcost
             del graph[apos][pos]
@@ -133,8 +132,6 @@ def optimize(graph: Graph) -> Graph:
             del graph[bpos][pos]
         if not any(pos in graph.get(nbor, []) for nbor in pos.nbors()):
             del graph[pos]
-        # print(f"  -> graph[{apos}]={graph[apos]}")
-        # print(f"   + graph[{bpos}]={graph[bpos]}")
     return graph
 
 
@@ -167,7 +164,6 @@ def longest_paths(graph: Graph, start: Coord, end: Coord) -> Cost:
         path = queue.pop()
         if path.last == end:
             if path.cost > longest:
-                # print("   ", path.cost)
                 longest = path.cost
         else:
             queue.extend(path.followers())
@@ -178,16 +174,11 @@ def longest_paths(graph: Graph, start: Coord, end: Coord) -> Cost:
 with open("23.input") as f:
     grid = Grid.parse(f)
 
-# print(f"Grid is {grid.height}x{grid.width} = {grid.height * grid.width}")
-# print(f"  and has {len("".join(grid.rows).replace("#", ""))} nodes")
-
 # Part 1: How many steps long is the longest hike?
 graph = optimize(grid.adjacencies())
-# print(f"Optimized graph has {len(graph)} nodes")
 print(longest_paths(graph, grid.start(), grid.end()))
 
 # Part 2: How many steps long is the longest hike after removing slopes?
 grid.steep_slopes = False
 graph = optimize(grid.adjacencies())
-# print(f"Optimized, graph has {len(graph)} nodes")
 print(longest_paths(graph, grid.start(), grid.end()))
