@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from functools import cached_property
 from typing import NamedTuple, Self
 
-from bitsets import bitset
+from bitsets import bitset  # type: ignore
 
 
 class Coord(NamedTuple):
@@ -59,7 +59,7 @@ class Grid:
         assert len(line_lens) == 1
         return line_lens.pop()
 
-    def __getitem__(self, pos: Coord) -> Cost:
+    def __getitem__(self, pos: Coord) -> str:
         return self.rows[pos.y][pos.x]
 
     def __contains__(self, pos: Coord) -> bool:
@@ -75,7 +75,9 @@ class Grid:
         assert self[ret] == "."
         return ret
 
-    def render(self, extra: dict[Coord, str] = {}) -> str:
+    def render(self, extra: dict[Coord, str] | None = None) -> str:
+        if extra is None:
+            extra = {}
         lines = []
         for y in range(self.height):
             line = []
@@ -144,13 +146,13 @@ def longest_paths(graph: Graph, start: Coord, end: Coord) -> Cost:
     class Path(NamedTuple):
         last: Coord
         cost: Cost
-        seen: node_set
+        seen: bitset  # type: ignore
 
         @classmethod
-        def new(cls, start: Coord) -> Self:
+        def new(cls, start: Coord) -> Self:  # type: ignore
             return cls(start, 0, node_set([start]))
 
-        def followers(self) -> Iterator[Self]:
+        def followers(self) -> Iterator[Self]:  # type: ignore
             for nbor, dcost in graph[self.last].items():
                 if nbor not in self.seen:
                     yield self.__class__(
