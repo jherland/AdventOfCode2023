@@ -1,12 +1,9 @@
-import heapq
-from collections import defaultdict
-from collections.abc import Callable, Iterable, Iterator
+from collections import deque
+from collections.abc import Iterator
 from dataclasses import dataclass, replace
-from functools import cache
 from itertools import cycle
 from math import prod
 from string import ascii_letters
-from sys import maxsize as infinity
 from typing import NamedTuple, Self
 
 
@@ -17,10 +14,10 @@ class Coord(NamedTuple):
 
     @classmethod
     def parse(cls, s: str) -> Self:
-        x, y, z = [int(n) for n in s.split(",")]
+        x, y, z = (int(n) for n in s.split(","))
         return cls(z, y, x)
 
-    def __add__(self, other: Self) -> Self:
+    def __add__(self, other: Self) -> Self:  # type: ignore[override]
         cls = self.__class__
         return cls(self.z + other.z, self.y + other.y, self.x + other.x)
 
@@ -35,11 +32,11 @@ class Coord(NamedTuple):
         """Return coords between self and other, inclusive."""
         if other < self:
             return other.span(self)
-        other += Coord(1, 1, 1)
+        other += self.__class__(1, 1, 1)
         for z in range(self.z, other.z):
             for y in range(self.y, other.y):
                 for x in range(self.x, other.x):
-                    yield Coord(z, y, x)
+                    yield self.__class__(z, y, x)
 
 
 @dataclass(frozen=True, order=True)
@@ -89,129 +86,27 @@ class Brick:
                 yield occupancy[pos]
 
 
-def falling(bricks: list[Brick]) -> Iterator[Brick]:
-    """Yield all falling bricks in the given situation."""
-    stable_coords = set()
-    for brick in sorted(bricks):
-        debug = False
-        # debug = (
-        #         (brick.start.y == 7 and brick.start.x == 2 and brick.name == "z")
-        #     or (brick.end.y == 8 and brick.end.x == 2 and brick.name == "E")
-        # )
-        if debug:
-            print(f"  {brick} is above __{brick.underneath()}__")
-        if brick.is_supported(stable_coords):
-            stable_coords |= set(brick.coords())
-            if debug:
-                print("    is supported")
-                # for other in brick.underneath().overlaps(occupancy):
-                    # print(f"    by {other}")
-        else:  # brick is falling
-            yield brick
-            if debug:
-                print("    is falling")
-
-
-def fall(brick_heap: list[Brick]) -> tuple[list[Brick], int]:
-    """Do one iteration of settling, and return the number of falling bricks."""
-    stable_coords = set()
-    falling = 0
-    new_heap = []
-    while brick_heap:
-        brick = heapq.heappop(brick_heap)
-        debug = False
-        # debug = (
-        #         (brick.start.y == 7 and brick.start.x == 2 and brick.name == "z")
-        #     or (brick.end.y == 8 and brick.end.x == 2 and brick.name == "E")
-        # )
-        if debug:
-            print(f"  {brick} is above __{brick.underneath()}__")
-        if brick.is_supported(stable_coords):
-            stable_coords |= set(brick.coords())
-            heapq.heappush(new_heap, brick)
-            if debug:
-                print("    is supported")
-                # for other in brick.underneath().overlaps(occupancy):
-                    # print(f"    by {other}")
-        else:  # brick is falling
-            heapq.heappush(new_heap, brick.fall())
-            falling += 1
-            if debug:
-                print("    is falling")
-    return new_heap, falling
-
-
-def fall_inplace(bricks: list[Brick]) -> int:
-    """Do one iteration of settling, and return the number of falling bricks."""
-    stable_coords = set()
-    falling = 0
-    for i, brick in enumerate(bricks):
-        debug = False
-        # debug = (
-        #         (brick.start.y == 7 and brick.start.x == 2 and brick.name == "z")
-        #     or (brick.end.y == 8 and brick.end.x == 2 and brick.name == "E")
-        # )
-        if debug:
-            print(f"  {brick} is above __{brick.underneath()}__")
-        if brick.is_supported(stable_coords):
-            stable_coords |= set(brick.coords())
-            if debug:
-                print("    is supported")
-                # for other in brick.underneath().overlaps(occupancy):
-                    # print(f"    by {other}")
-        else:  # brick is falling
-            bricks[i] = brick.fall()
-            falling += 1
-            if debug:
-                print("    is falling")
-    return falling
-
-
-def settle_old(bricks: list[Brick]) -> list[Brick]:
-    heapq.heapify(bricks)
-    round = 0
-    while True:
-        # occupancy = {pos: brick for brick in bricks for pos in brick.coords()}
-        # assert all(
-        #     set(brick.overlaps(occupancy)) == {brick}
-        #     for brick in bricks
-        # ), f"{brick} overlaps with {list(brick.overlaps(occupancy))}"
-        falling_bricks = set(falling(bricks))
-        if not falling_bricks:
-            return bricks
-        bricks = [b.fall() if b in falling_bricks else b for b in bricks]
-        round += 1
-        # print(f"{round=}, {len(falling_bricks)=}")
-
-
-def settle_heap(bricks: list[Brick]) -> list[Brick]:
-    heapq.heapify(bricks)
-    round = 0
-    while True:
-        # occupancy = {pos: brick for brick in bricks for pos in brick.coords()}
-        # assert all(
-        #     set(brick.overlaps(occupancy)) == {brick}
-        #     for brick in bricks
-        # ), f"{brick} overlaps with {list(brick.overlaps(occupancy))}"
-        new_bricks, falling = fall(bricks)
-        if not falling:
-            return new_bricks
-        bricks = new_bricks
-        round += 1
-        # print(f"{round=}, {len(falling_bricks)=}")
-
-
-def settle_inplace(bricks: list[Brick]) -> list[Brick]:
+def settle(bricks: list[Brick]) -> list[Brick]:
     bricks.sort()
-    while True:
-        if not fall_inplace(bricks):
-            return sorted(bricks)
+
+    def fall() -> int:
+        """Do one iteration of settling, return the number of falling bricks."""
+        stable_coords: set[Coord] = set()
+        falling = 0
+        for i, brick in enumerate(bricks):
+            if brick.is_supported(stable_coords):
+                stable_coords |= set(brick.coords())
+            else:  # brick is falling
+                bricks[i] = brick.fall()
+                falling += 1
+        return falling
+
+    while fall():
+        pass
+    return sorted(bricks)
 
 
-settle = settle_inplace
-
-
-def support_pairs(bricks: list[Brick]) -> tuple[Brick, Brick]:
+def support_pairs(bricks: list[Brick]) -> Iterator[tuple[Brick, Brick]]:
     """Find (supporter, supportee) pairs in given bricks."""
     occupancy = {pos: brick for brick in bricks for pos in brick.coords()}
     for brick in bricks:
@@ -235,53 +130,61 @@ def find_supportees(bricks: list[Brick]) -> dict[Brick, set[Brick]]:
     return ret
 
 
-def fallout(bricks: list[Brick]) -> dict[Brick, int]:
-    """Yield each brick and #other bricks that would fall if this is removed."""
-    supporters = find_supporters(bricks)
-    supportees = find_supportees(bricks)
-
-    brick_fallout: dict[Brick, int] = {}
-
-    for brick in reversed(bricks):
-        print(f"  fallout from {brick=}...")
-        cur_fallout = 0
-        for child in supportees.get(brick, []):
-            assert child in brick_fallout
-            num_supporters = len(supporters[child])
-            print(f"    {child=} has {num_supporters=}")
-            assert brick in supporters[child]
-            if num_supporters < 2:  # child + grandchildren will fall
-                cur_fallout += 1 + brick_fallout[child]
-        print(f"    fallout -> {cur_fallout}")
-        brick_fallout[brick] = cur_fallout
-    return brick_fallout
-
-
 def can_be_disintegrated(bricks: list[Brick]) -> Iterator[Brick]:
     """Yield the bricks that can be removed without causing others to fall."""
-    # for brick, n in fallout(bricks):
-    #     if n == 0:
-    #         yield brick
     supporters = find_supporters(bricks)
     supportees = find_supportees(bricks)
     for brick in bricks:
-        # print(f"Looking at {brick}")
         if brick not in supportees:  # brick is not supporting any other bricks
-            # print("  not supporting anything!")
             yield brick
             continue
         if not any(len(supporters[child]) == 1 for child in supportees[brick]):
-            # print(f"  no supportee has this as sole supporter")
             yield brick
             continue
 
 
+def traverse(
+    supportees: dict[Brick, set[Brick]], grounded: list[Brick]
+) -> Iterator[Brick]:
+    queue = deque(grounded)
+    while queue:
+        current = queue.popleft()
+        yield current
+        queue.extend(supportees.get(current, []))
+
+
+def fallout(bricks: list[Brick]) -> Iterator[tuple[Brick, int]]:
+    """For each brick, find how many other bricks would fall when it is removed.
+
+    Yield (brick, fallout) pairs associating a brick with the number of other
+    bricks that would fall if that first brick is removed.
+    """
+    # Using a dict mapping supporters to supportees, we can traverse this dict
+    # starting from the supporters on the ground to find all supported bricks.
+    # To find how many bricks would fall when removing one brick (X), we remove
+    # brick X from this dict, and re-traverse to see how many bricks remain
+    # supported. The number of bricks that will fall is found by subtracting
+    # this number from the total number of bricks.
+    num_bricks = len(bricks)
+    supportees = find_supportees(bricks)
+    grounded = [brick for brick in bricks if brick.on_ground()]
+    assert len(set(traverse(supportees, grounded))) == num_bricks
+
+    for supporter in supportees:
+        without_supporter = supportees.copy()
+        del without_supporter[supporter]
+        remain_supported = len(set(traverse(without_supporter, grounded)))
+        yield supporter, num_bricks - remain_supported
+
+
 with open("22.input") as f:
-    bricks = [Brick.parse(line, name) for line, name in zip(f, cycle(ascii_letters))]
+    bricks = [
+        Brick.parse(line, name) for line, name in zip(f, cycle(ascii_letters))
+    ]
 settled = settle(bricks)
 
 # # Part 1: How many bricks could be safely chosen as the one to disintegrate?
 print(len(list(can_be_disintegrated(settled))))
 
 # Part 2: What is the sum of the number of other bricks that would fall?
-print(sum(fallout(settled).values()))
+print(sum(num_falling for _, num_falling in fallout(settled)))
