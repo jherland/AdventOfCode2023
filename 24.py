@@ -5,7 +5,7 @@ from functools import cached_property
 from itertools import combinations, zip_longest
 from typing import NamedTuple, Self
 
-from sympy import Symbol, solve_poly_system  # type: ignore
+from sympy import Symbol, solve_poly_system
 
 
 class Coord(NamedTuple):
@@ -158,7 +158,7 @@ X, Y, Z, VX, VY, VZ = syms
 eqs = []
 for i, line in enumerate(hailstones[:3]):  # only look at the first 3 lines
     # A different time variable for each intersection
-    T = Symbol(f"t{i}")
+    T = Symbol(f"t{i}")  # type: ignore
 
     # (x + vx * t) is the x-coordinate of our throw,
     # (line.pos.x + line.vel.x * t) is the x-coordinate of the hailstone,
@@ -170,7 +170,7 @@ for i, line in enumerate(hailstones[:3]):  # only look at the first 3 lines
     eqs += [Z + VZ * T - line.pos.z - line.vel.z * T]
     syms.append(T)
 
-results = solve_poly_system(eqs, *syms)
+results = solve_poly_system(eqs, *syms)  # type: ignore
 assert len(results) == 1
 x, y, z, vx, vy, vz, *ts = next(iter(results))
 throw = Line3D(Coord(x, y, z), Coord(vx, vy, vz))
