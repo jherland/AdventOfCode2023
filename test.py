@@ -2,6 +2,7 @@
 
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 py_files = {p.stem: p for p in Path.cwd().glob("??.py")}
@@ -21,6 +22,7 @@ def test(stem: str) -> int:
         print(f"Missing expected output for day #{stem}!")
         return 3
 
+    t_start = time.monotonic()
     try:
         proc = subprocess.run(
             [sys.executable, script],  # noqa: S603
@@ -35,12 +37,14 @@ def test(stem: str) -> int:
         print(e.stderr, end="")
         print("**************")
         raise
+    t_end = time.monotonic()
     if proc.stdout != expect:
         print(f"*** Test failed for day #{stem}!")
         print(f"    EXPECTED: {expect!r}")
         print(f"     BUT GOT: {proc.stdout!r}")
         return 1
     print(proc.stdout, end="")
+    print(f"  - took {t_end - t_start:.02f}s")
     return 0
 
 
