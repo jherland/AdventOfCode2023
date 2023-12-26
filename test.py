@@ -36,6 +36,11 @@ def test(stem: str) -> int:
     return 0
 
 
-for stem in sorted(py_files.keys() | expect_files.keys()):
+if len(sys.argv) >= 2:
+    stems = sys.argv[1:]
+else:
+    stems = sorted(py_files.keys() | expect_files.keys())
+
+for stem in stems:
     if retval := test(stem):
         sys.exit(retval)
