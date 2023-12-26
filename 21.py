@@ -1,5 +1,6 @@
 from collections import defaultdict
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterable, Iterator
+from dataclasses import dataclass
 from heapq import heappop, heappush
 from sys import maxsize as infinity
 from typing import NamedTuple, Self
@@ -9,57 +10,15 @@ class Coord(NamedTuple):
     y: int
     x: int
 
+    def __add__(self, other: Self) -> Self:  # type: ignore[override]
+        return self.__class__(self.y + other.y, self.x + other.x)
+
     def nbors(self) -> Iterator[Self]:
         cls = self.__class__
         yield cls(self.y - 1, self.x)  # N
         yield cls(self.y, self.x + 1)  # E
         yield cls(self.y + 1, self.x)  # S
         yield cls(self.y, self.x - 1)  # W
-
-    # def mgdist(self, other: Self) -> int:
-    #     return abs(self.y - other.y) + abs(self.x - other.x)
-
-
-# def bbox(coords: Iterable[Coord]) -> tuple[Coord, Coord]:
-#     it = iter(coords)
-#     first = next(it)
-#     min_y, max_y = first.y, first.y
-#     min_x, max_x = first.x, first.x
-#     for pos in it:
-#         min_y = min(min_y, pos.y)
-#         max_y = max(max_y, pos.y)
-#         min_x = min(min_x, pos.x)
-#         max_x = max(max_x, pos.x)
-#     return Coord(min_y, min_x), Coord(max_y, max_x)
-
-
-# def render(*thing_dicts: dict[Coord, str], default: str = " ") -> str:
-
-#     def char(pos: Coord):
-#         for things in thing_dicts:
-#             if pos in things:
-#                 return things[pos]
-#         return default
-
-#     top_left, bottom_right = bbox(
-#         chain.from_iterable(things.keys() for things in thing_dicts)
-#     )
-#     return "\n".join(
-#         [
-#             "".join(
-#                 [
-#                     char(Coord(y, x))
-#                     for x in range(top_left.x, bottom_right.x + 1)
-#                 ]
-#             ) for y in range(top_left.y, bottom_right.y + 1)
-#         ]
-#     )
-
-
-def parse(lines: list[str]) -> Iterator[tuple[Coord, str]]:
-    for y, line in enumerate(lines):
-        for x, c in enumerate(line.rstrip()):
-            yield Coord(y, x), c
 
 
 def shortest_paths(
@@ -80,34 +39,66 @@ def shortest_paths(
     return dist
 
 
+@dataclass(frozen=True)
+class Garden:
+    grass: set[Coord]
+    start: Coord
+    height: int
+    width: int
+
+    @classmethod
+    def parse(cls, lines: Iterable[str]) -> Self:
+        garden = [
+            (Coord(y, x), c)
+            for y, line in enumerate(lines)
+            for x, c in enumerate(line.rstrip())
+        ]
+        return cls(
+            grass={coord for coord, c in garden if c in {".", "S"}},
+            start=next(coord for coord, c in garden if c == "S"),
+            height=max(coord.y for coord, _ in garden) + 1,
+            width=max(coord.x for coord, _ in garden) + 1,
+        )
+
+    def count_paths(self, steps: int) -> int:
+        def nbors(pos: Coord) -> Iterator[Coord]:
+            for nbor in pos.nbors():
+                if nbor in self.grass:
+                    yield nbor
+
+        dist = shortest_paths(nbors, self.start)
+        reachable = {
+            pos for pos, n in dist.items() if n <= steps and n % 2 == steps % 2
+        }
+        return len(reachable)
+
+    def expand(self, n: int) -> Self:
+        grass = set()
+        for y in range(-n, n + 1):
+            for x in range(-n, n + 1):
+                offset = Coord(self.height * y, self.width * x)
+                grass.update({coord + offset for coord in self.grass})
+        return self.__class__(
+            grass,
+            self.start,
+            self.height * (2 * n + 1),
+            self.width * (2 * n + 1),
+        )
+
+
 with open("21.input") as f:
-    map = list(parse(f))
-    rocks = {coord for coord, c in map if c == "#"}
-    garden = {coord for coord, c in map if c == "."}
-    start = next(coord for coord, c in map if c == "S")
-
-# print(start)
-# print(render({r: "#" for r in rocks}, {g: "." for g in garden}, {start: "S"}))
-
-def nbors(pos: Coord) -> Iterator[Coord]:
-    for nbor in pos.nbors():
-        if nbor in garden:
-            yield nbor
+    garden = Garden.parse(f)
 
 # Part 1: How many garden plots could the Elf reach in exactly 64 steps?
-dist = shortest_paths(nbors, start)
-# from pprint import pprint
-# pprint(dist)
-# print(render(
-#     {p: hex(n)[-1] for p, n in dist.items()},
-#     {r: "#" for r in rocks},
-#     {g: "." for g in garden},
-#     {start: "S"},
-# ))
-max_steps = 64
-reachable = {
-    pos for pos, n in dist.items() if n <= max_steps and n % 2 == max_steps % 2
-}
-print(len(reachable))
+print(garden.count_paths(64))
 
 # Part 2: How many garden plots could the Elf reach in exactly 26501365 steps?
+# Quadratic magic...
+expanded_garden = garden.expand(2)
+steps = 26501365
+n = steps // garden.width
+a, b, c = (
+    expanded_garden.count_paths(s * garden.width + (garden.width // 2))
+    for s in range(3)
+)
+print(a + n * (b - a + (n - 1) * (c - b - b + a) // 2))
