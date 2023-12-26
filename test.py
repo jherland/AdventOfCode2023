@@ -21,12 +21,20 @@ def test(stem: str) -> int:
         print(f"Missing expected output for day #{stem}!")
         return 3
 
-    proc = subprocess.run(
-        [sys.executable, script],  # noqa: S603
-        capture_output=True,
-        text=True,
-        check=True,
-    )
+    try:
+        proc = subprocess.run(
+            [sys.executable, script],  # noqa: S603
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        print("*** STDOUT ***")
+        print(e.stdout, end="")
+        print("*** STDERR ***")
+        print(e.stderr, end="")
+        print("**************")
+        raise
     if proc.stdout != expect:
         print(f"*** Test failed for day #{stem}!")
         print(f"    EXPECTED: {expect!r}")
