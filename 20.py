@@ -1,7 +1,10 @@
 from collections import deque
 from collections.abc import Iterable, Iterator
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from math import prod
 from typing import Self
+
+DEBUG = False
 
 
 @dataclass(frozen=True)
@@ -22,10 +25,11 @@ class Module:
     def pulse(self, pulse: Pulse) -> Iterator[Pulse]:
         """Receive/process an incoming pulse."""
         assert pulse.dst == self.name
-        # print(pulse)
+        if DEBUG:
+            print(pulse)
         return iter(())  # empty generator
 
-    def _send(self, state: bool) -> Iterator[Pulse]:
+    def _send(self, *, state: bool) -> Iterator[Pulse]:
         """Generate output pulses to all of self's outputs."""
         for out in self.outputs:
             yield Pulse(self.name, out, state)
@@ -38,7 +42,7 @@ class Broadcaster(Module):
 
     def pulse(self, pulse: Pulse) -> Iterator[Pulse]:
         super().pulse(pulse)
-        yield from self._send(pulse.state)
+        yield from self._send(state=pulse.state)
 
 
 @dataclass
@@ -48,8 +52,11 @@ class FlipFlop(Module):
     def pulse(self, pulse: Pulse) -> Iterator[Pulse]:
         super().pulse(pulse)
         if pulse.state is False:
+            if DEBUG:
+                transition = "high->low" if self.state else "low->high"
+                print(f"  {self.name}[{transition}]")
             self.state = not self.state
-            yield from self._send(self.state)
+            yield from self._send(state=self.state)
 
 
 @dataclass
@@ -60,7 +67,7 @@ class Conjunction(Module):
         super().pulse(pulse)
         self.inputs[pulse.src] = pulse.state
         out_pulse = not all(inp is True for inp in self.inputs.values())
-        yield from self._send(out_pulse)
+        yield from self._send(state=out_pulse)
 
 
 @dataclass
@@ -72,9 +79,9 @@ class Output(Module):
 @dataclass
 class Circuit:
     modules: dict[str, Module]
+    probes: dict[str, int] = field(default_factory=dict)
     high_pulses: int = 0
     low_pulses: int = 0
-    rx_low_pulses: int = 0
 
     @staticmethod
     def parse_one(line: str) -> Module:
@@ -110,11 +117,22 @@ class Circuit:
                 self.high_pulses += 1
             else:
                 self.low_pulses += 1
-                if pulse.dst == "rx":
-                    self.rx_low_pulses += 1
+                if pulse.src in self.probes:
+                    self.probes[pulse.src] += 1
 
     def push_button(self) -> None:
-        self._process_pulses(Pulse("button", "broadcaster", False))
+        self._process_pulses(Pulse("button", "broadcaster", state=False))
+
+    def find_next_conjunction(self, module: str) -> str:
+        if isinstance(self.modules[module], Conjunction):
+            return module
+        return self.find_next_conjunction(self.modules[module].outputs[0])
+
+    def set_probe(self, probe: str) -> None:
+        self.probes[probe] = 0
+
+    def remove_probe(self, probe: str) -> None:
+        del self.probes[probe]
 
 
 with open("20.input") as f:
@@ -127,11 +145,45 @@ for _ in range(1000):
 print(circuit.high_pulses * circuit.low_pulses)
 
 # Part 2: What is the fewest number of button presses single LOW  pulse to "rx"?
-print(circuit.rx_low_pulses)
+#
+# From analyzing the circuit in 20.analysis.svg, we see that we have 4 separate
+# networks, each consisting of 12 FlipFlops feeding into each other, as well as
+# connecting to and from a Conjunction. The four networks are fed LOW pulses
+# from the "broadcaster", and the Conjunction at the end connect via another
+# Conjunction (functioning as a NOT gate) before finally combining in a final
+# Conjuctions connected to the "rx" output.
+#
+# Each network represent a 12-bit counter that will only emit a LOW pulse when
+# the correct number of LOW pulses from the "broadcaster" have caused all
+# FlipFlops in the network to reach their HIGH state and wrap around. Due to the
+# various interconnections within each network, this happens BEFORE 2**12
+# (=4096) is reached. Each network will count a prime(?) number of incoming LOW
+# pulses before emitting a single LOW pulse and reset.
+#
+# The final combination of Conjunction modules cause the first LOW pulse to "rx"
+# only to happen when ALL 4 networks are outputting a LOW pulse, i.e. after the
+# least common multiple of each of their counters have been reached.
+#
+# We solve this by analyzing each of the 4 networks separately to determine
+# these 4 12-bit counter values, and the end result is the product of these
+# counters.
 circuit = Circuit.parse(lines)
+
+# Identify the 4 networks by following the connections from the "broadcaster"
+# until we find a Conjunction node.
+for module in circuit.modules["broadcaster"].outputs:
+    circuit.set_probe(circuit.find_next_conjunction(module))
+
+# Keep pushing button until each network has emitted one LOW pulse each
+periods = []
 n = 0
-while circuit.rx_low_pulses == 0:
+while circuit.probes:
     circuit.push_button()
     n += 1
-assert circuit.rx_low_pulses == 1
-print(n)
+    triggered = {name for name, count in circuit.probes.items() if count > 0}
+    for name in triggered:
+        periods.append(n)
+        circuit.remove_probe(name)
+
+# Multiply periods together to get overall answer
+print(prod(periods))
